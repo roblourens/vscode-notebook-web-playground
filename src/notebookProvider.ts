@@ -13,6 +13,12 @@ type WebBookLanguage = 'html' | 'css' | 'javascript' | 'markdown';
 const WEB_BOOK_LANGUAGES: WebBookLanguage[] = ['html', 'css', 'javascript', 'markdown'];
 
 export class WebBookProvider implements vscode.NotebookContentProvider {
+	constructor() {
+		vscode.notebook.onDidChangeNotebookDocument(e => {
+			this.executeCell(e.document, undefined);
+		});
+	}
+
 	async openNotebook(uri: vscode.Uri): Promise<vscode.NotebookData> {
 		const buffer = await vscode.workspace.fs.readFile(uri);
 		const contents = buffer.toString();
@@ -22,13 +28,14 @@ export class WebBookProvider implements vscode.NotebookContentProvider {
 
 		const data: IWebBookData = JSON.parse(contents);
 		const cells: vscode.NotebookCellData[] = data.cells.map(cell => {
-			return <vscode.NotebookCellData>{
+			return {
 				cellKind: cell.language === 'markdown' ? vscode.CellKind.Markdown : vscode.CellKind.Code,
 				language: cell.language,
 				metadata: {
 					editable: true,
 					runnable: true
 				},
+				outputs: [],
 				source: cell.source
 			};
 		});
@@ -44,13 +51,42 @@ export class WebBookProvider implements vscode.NotebookContentProvider {
 		};
 	}
 
-	async executeCell(document: vscode.NotebookDocument, cell: vscode.NotebookCell | undefined, token: vscode.CancellationToken): Promise<void> {
-		const allJS = document.cells.filter(cell => cell.language === 'javascript')
+	private getDocumentParts(document: vscode.NotebookDocument): vscode.NotebookCell[][] {
+		const parts: vscode.NotebookCell[][] = [];
+		let currentPart: vscode.NotebookCell[] = [];
+
+		document.cells.forEach(cell => {
+			currentPart.push(cell);
+			if (cell.language === 'html') {
+				parts.push(currentPart);
+				currentPart = [];
+			}
+		});
+
+		return parts;
+	}
+
+	private async executeNotebook(document: vscode.NotebookDocument): Promise<void> {
+		const parts = this.getDocumentParts(document);
+		await Promise.all(parts.map(part => this.executePart(part)));
+	}
+
+	private async executePart(part: vscode.NotebookCell[]): Promise<void> {
+		const allJS = part.filter(cell => cell.language === 'javascript')
 			.map(cell => cell.source)
 			.join('\n');
-		const allCSS = document.cells.filter(cell => cell.language === 'css')
+		const allCSS = part.filter(cell => cell.language === 'css')
 			.map(cell => cell.source)
 			.join('\n');
+
+		// Should be just one html cell
+		const htmlCells = part.filter(cell => cell.language === 'html');
+		if (htmlCells.length > 1) {
+			throw new Error('Each part should have 1 html cell');
+		}
+
+		const htmlCell = htmlCells[0];
+		const htmlSource = htmlCell.source;
 
 		const combinedHtml = `
 <html>
@@ -62,18 +98,33 @@ ${allCSS}
 ${allJS}
 </script>
 
-${cell!.source}
+${htmlSource}
+
 </html>
 		`;
 
-		cell!.outputs = [
+		const injectionScript = `<iframe style="border: none; height: 100%; width: 100%" src="data:text/html;charset=utf-8,${encodeURI(combinedHtml)}">`;
+		htmlCell.outputs = [
 			{
 				outputKind: vscode.CellOutputKind.Rich,
 				data: {
-					'text/html': combinedHtml
+					'text/html': injectionScript
 				}
 			}
 		];
+	}
+
+	async executeCell(document: vscode.NotebookDocument, cell: vscode.NotebookCell | undefined, token?: vscode.CancellationToken): Promise<void> {
+		if (!cell) {
+			return this.executeNotebook(document);
+		}
+
+		const parts = this.getDocumentParts(document);
+		parts.forEach(part => {
+			if (part.includes(cell)) {
+				this.executePart(part);
+			}
+		});
 	}
 
 	private getNewNotebook(): vscode.NotebookData {
@@ -116,6 +167,8 @@ ${cell!.source}
 
 		const data: IWebBookData = { cells };
 		await vscode.workspace.fs.writeFile(document.uri, new Buffer(JSON.stringify(data)));
+
+		await this.executeNotebook(document);
 	}
 
 	saveNotebookAs(targetResource: vscode.Uri, document: vscode.NotebookDocument, cancellation: vscode.CancellationToken): Promise<void> {
