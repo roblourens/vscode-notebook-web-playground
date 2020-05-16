@@ -95,7 +95,9 @@ ${allCSS}
 </style>
 
 <script>
+(() => {
 ${allJS}
+})();
 </script>
 
 ${htmlSource}
@@ -103,12 +105,12 @@ ${htmlSource}
 </html>
 		`;
 
-		const injectionScript = `<iframe style="border: none; height: 100%; width: 100%" src="data:text/html;charset=utf-8,${encodeURI(combinedHtml)}">`;
+		// const injectionScript = `<iframe style="border: none; height: 100%; width: 100%" src="data:text/html;charset=utf-8,${encodeURI(combinedHtml)}">`;
 		htmlCell.outputs = [
 			{
 				outputKind: vscode.CellOutputKind.Rich,
 				data: {
-					'text/html': injectionScript
+					'text/html': combinedHtml
 				}
 			}
 		];
