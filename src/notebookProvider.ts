@@ -88,6 +88,7 @@ export class WebBookProvider implements vscode.NotebookContentProvider {
 		const htmlCell = htmlCells[0];
 		const htmlSource = htmlCell.source;
 
+		const logId = 'logoutput_' + Math.floor(Math.random() * 1000);
 		const combinedHtml = `
 <html>
 <style>
@@ -96,7 +97,18 @@ ${allCSS}
 
 <script>
 (() => {
-${allJS}
+	if (!window.originalLog) {
+		window.originalLog = console.log.bind(console);
+	}
+
+	console.log = (...args) => {
+		const logRow = document.createElement('div');
+		logRow.textContent = args.join(' ');
+		document.querySelector('#${logId}').appendChild(logRow);
+		window.originalLog.apply(args);
+	}
+
+	${allJS}
 })();
 </script>
 
@@ -105,12 +117,20 @@ ${htmlSource}
 </html>
 		`;
 
+		const logOutputContainer = `<div style="max-height: 300px; overflow: scroll" id="${logId}"></div>`;
+
 		// const injectionScript = `<iframe style="border: none; height: 100%; width: 100%" src="data:text/html;charset=utf-8,${encodeURI(combinedHtml)}">`;
 		htmlCell.outputs = [
 			{
 				outputKind: vscode.CellOutputKind.Rich,
 				data: {
 					'text/html': combinedHtml
+				}
+			},
+			{
+				outputKind: vscode.CellOutputKind.Rich,
+				data: {
+					'text/html': logOutputContainer
 				}
 			}
 		];
@@ -168,7 +188,7 @@ ${htmlSource}
 		});
 
 		const data: IWebBookData = { cells };
-		await vscode.workspace.fs.writeFile(document.uri, new Buffer(JSON.stringify(data)));
+		await vscode.workspace.fs.writeFile(document.uri, new Buffer(JSON.stringify(data, undefined, 2)));
 
 		await this.executeNotebook(document);
 	}

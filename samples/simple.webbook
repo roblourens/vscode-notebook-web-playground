@@ -1,1 +1,16 @@
-{"cells":[{"source":"document.querySelector('.thing1').textContent = 'Hello, Notebook!'","language":"javascript"},{"source":".thing1 {\n  font-size: 48px;\n  color: red;\n}","language":"css"},{"source":"<span class=\"thing1\"></span>","language":"html"}]}
+{
+  "cells": [
+    {
+      "source": "document.querySelector('.thing1').textContent = 'Hello, Notebook!'\n\n// setInterval(() => {\n// \tconsole.log('hello! ' + Math.random());\n// }, 1000);",
+      "language": "javascript"
+    },
+    {
+      "source": ".thing1 {\n  font-size: 48px;\n  color: red;\n}",
+      "language": "css"
+    },
+    {
+      "source": "<span class=\"thing1\"></span>",
+      "language": "html"
+    }
+  ]
+}
