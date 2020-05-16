@@ -1,5 +1,6 @@
 {
 	"name": "notebook-web-playground",
+	"publisher": "roblourens",
 	"displayName": "notebook-web-playground",
 	"description": "",
 	"version": "0.0.1",
@@ -10,14 +11,20 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:notebook-web-playground.helloWorld"
+		"onNotebookEditor:web-playground"
 	],
+	"enableProposedApi": true,
 	"main": "./out/extension.js",
 	"contributes": {
-		"commands": [
+		"notebookProvider": [
 			{
-				"command": "notebook-web-playground.helloWorld",
-				"title": "Hello World"
+				"viewType": "web-playground",
+				"displayName": "Web Playground",
+				"selector": [
+					{
+						"filenamePattern": "*.webbook"
+					}
+				]
 			}
 		]
 	},

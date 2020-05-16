@@ -1,0 +1,1 @@
+{"cells":[{"source":"document.querySelector('.blah').textContent = 'Hello, notebook!'","language":"javascript"},{"source":".blah {\n  color: green;\n}","language":"css"},{"source":"<span class=\"blah\"></span>","language":"html"}]}
