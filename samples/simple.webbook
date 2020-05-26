@@ -1,11 +1,11 @@
 {
   "cells": [
     {
-      "source": "document.querySelector('.thing1').textContent = 'Hello, Notebook!'\n\n// setInterval(() => {\n// \tconsole.log('hello! ' + Math.random());\n// }, 1000);",
+      "source": "document.querySelector('.thing1').textContent = 'Hello, Notebook!'\n\nsetInterval(() => {\n\tconsole.log('12!');\n}, 1000);",
       "language": "javascript"
     },
     {
-      "source": ".thing1 {\n  font-size: 48px;\n  color: red;\n}",
+      "source": ".thing1 {\n  font-size: 31px;\n  color: blue;\n}",
       "language": "css"
     },
     {
