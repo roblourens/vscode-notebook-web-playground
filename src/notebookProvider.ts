@@ -14,9 +14,9 @@ const WEB_BOOK_LANGUAGES: WebBookLanguage[] = ['html', 'css', 'javascript', 'mar
 
 export class WebBookProvider implements vscode.NotebookContentProvider {
 	constructor() {
-		vscode.notebook.onDidChangeNotebookDocument(e => {
-			this.executeCell(e.document, undefined);
-		});
+		// vscode.notebook.onDidChangeNotebookCells(e => {
+		// 	this.executeCell(e.document, undefined);
+		// });
 	}
 
 	async openNotebook(uri: vscode.Uri): Promise<vscode.NotebookData> {
